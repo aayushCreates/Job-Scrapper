@@ -1,3 +1,4 @@
+import { autoScrollUntil, paginateUntil } from "@/utils/action.utils";
 import { chromium } from "playwright";
 
 
@@ -28,7 +29,7 @@ const scrapper =  async (config: any, role: string, maxJobs=10)=> {
 
         // If infinite scroll:
         if(config.loadType === 'scroll') {
-            await autoscrollUntil(page, config.selectors.container, maxJobs);
+            await autoScrollUntil(page, config.selectors.container, maxJobs);
         }
 
         if(config.loadType === 'pagination'){
