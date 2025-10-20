@@ -1,9 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 
 export const aiFilteration = async (chunkedData: any) => {
-  const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const finalFormattedJsonArr: any = [];
 
-  const prompt = `
+  chunkedData.map(async (cd: any) => {
+    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+    const prompt = `
 You are a strict formatter assistant.
 
 Your job is to take an array of **raw, scraped job objects** and clean/normalize them to fit the following exact schema:
@@ -34,26 +37,27 @@ Here is the data:
 ${JSON.stringify(chunkedData)}
 `;
 
-  const result = await genAI.models.generateContent({
-    model: 'gemini-2.0-pro',
-    contents: prompt
-  })
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.0-pro",
+      contents: prompt,
+    });
 
-  let raw = result?.text?.trim();
+    let raw = result?.text?.trim();
 
-  // Strip markdown code block (if AI returns it)
-  if (raw?.startsWith("```json")) {
-    raw = raw
-      .replace(/```json\s*/i, "")
-      .replace(/```$/, "")
-      .trim();
-  }
+    // Strip markdown code block (if AI returns it)
+    if (raw?.startsWith("```json")) {
+      raw = raw
+        .replace(/```json\s*/i, "")
+        .replace(/```$/, "")
+        .trim();
+    }
 
-  let formattedJobs;
-  try {
-    formattedJobs = JSON.parse(raw as string);
-    console.log("✅ Cleaned jobs:", formattedJobs);
-  } catch (err) {
-    console.error("❌ JSON parsing failed:", raw);
-  }
+    try {
+      finalFormattedJsonArr.push(JSON.parse(raw as string));
+    } catch (err) {
+      console.error("❌ JSON parsing failed:", raw);
+    }
+  });
+
+  return finalFormattedJsonArr;
 };
