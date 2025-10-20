@@ -11,3 +11,4 @@ export const chunkData = (jobDetails: any, limit: number)=> {
     
     return chunks;
 }
+ 

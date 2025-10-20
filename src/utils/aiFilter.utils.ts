@@ -1,28 +1,59 @@
 import { GoogleGenAI } from "@google/genai";
 
-export const aiFilteration = async (processedData: any)=> {
-    try {
-        const GEMINI_API_KEY = process.env.API_KEY;
-    const ai = new GoogleGenAI({
-        apiKey: GEMINI_API_KEY
-    })
+export const aiFilteration = async (chunkedData: any) => {
+  const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    const prompt = `
-    You are an assistant that takes an array of job objects which having scrapped data form the job-boards.
-    **I want that you return a JSON array strictly matching schema: {title, description, companyName, location, minSalary, maxSalary, fixedSalary, eligibleYear, requiredExp, skills, jobUrl, postPlatform, aiScore, experienceLevel, position, postedAt, createdAt}.
-Rules: ... (salary parsing, remove \n, etc.)**
-        ${processedData}
-    `
+  const prompt = `
+You are a strict formatter assistant.
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash-001',
-        contents: prompt
-    })
+Your job is to take an array of **raw, scraped job objects** and clean/normalize them to fit the following exact schema:
 
-    return response;
-    } catch(err) {
-        console.log("Error in filtering the scrapped job from AI");
-    }
+{
+  title: string,
+  position: string,
+  description: string,
+  requiredSkills: string[],
+  allowedYears: string,
+  allowedBranches: string[],
+  salary: string,
+  jobUrl: string,
+  companyName: string,
+  postedAt: string (ISO 8601 format),
+  createdAt: string (ISO 8601),
+  updatedAt: string (ISO 8601)
 }
 
+### Rules:
+- Normalize \`requiredSkills\` to an array (e.g. split on commas).
+- Keep \`salary\` as a string (e.g. "₹5–8 LPA", "Not disclosed").
+- Ensure all date fields are ISO strings (e.g. "2025-10-20T00:00:00Z").
+- Return only the JSON array. No markdown, no explanation.
 
+Here is the data:
+
+${JSON.stringify(chunkedData)}
+`;
+
+  const result = await genAI.models.generateContent({
+    model: 'gemini-2.0-pro',
+    contents: prompt
+  })
+
+  let raw = result?.text?.trim();
+
+  // Strip markdown code block (if AI returns it)
+  if (raw?.startsWith("```json")) {
+    raw = raw
+      .replace(/```json\s*/i, "")
+      .replace(/```$/, "")
+      .trim();
+  }
+
+  let formattedJobs;
+  try {
+    formattedJobs = JSON.parse(raw as string);
+    console.log("✅ Cleaned jobs:", formattedJobs);
+  } catch (err) {
+    console.error("❌ JSON parsing failed:", raw);
+  }
+};

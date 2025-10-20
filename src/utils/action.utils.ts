@@ -9,10 +9,10 @@ export const autoScrollUntil = async (page: any, container: any, maxJobs: number
 
             await page.waitForTimeout(1500);
 
-            const count = page.$$eval(container, eles => eles.length);
+            const count = page.$$eval(container, (elements: any) => elements.length);
 
             if(count >= maxJobs) {
-                break;
+                break; 
             }
 
             if(prevCount === count){

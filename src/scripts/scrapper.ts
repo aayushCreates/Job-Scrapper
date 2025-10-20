@@ -2,7 +2,7 @@ import { autoScrollUntil, paginateUntil } from "@/utils/action.utils";
 import { chromium } from "playwright";
 
 
-const scrapper =  async (config: any, role: string, maxJobs=10)=> {
+export const scrapper =  async (config: any, role: string, maxJobs=10)=> {
     try {
         const browser = await chromium.launch({
             headless: true
@@ -36,8 +36,8 @@ const scrapper =  async (config: any, role: string, maxJobs=10)=> {
             await paginateUntil(page, config, maxJobs);
         }
 
-        const cards = await page.$$eval(config.selectors.container, (els, sel, limit) =>
-            els.slice(0, limit).map(el => el.outerHTML), config.selectors, maxJobs
+        const cards = await page.$$eval(config.selectors.container, (els: any, sel: any, limit: number) =>
+            els.slice(0, limit).map((el: any) => el.outerHTML), config.selectors, maxJobs
           );
 
         await browser.close();
