@@ -1,8 +1,10 @@
 import { autoScrollUntil, paginateUntil } from "@/utils/action.utils";
-import { chromium } from "playwright";
+import { chromium } from "playwright-extra";
+import stealth from 'puppeteer-extra-plugin-stealth';
 
+chromium.use(stealth());
 
-export const scrapper = async (config: any, role: string, maxJobs = 10) => {
+export const scrapper = async (config: any, role: string, maxJobs = 5, platform: string) => {
     try {
         const browser = await chromium.launch({
             headless: true
@@ -10,9 +12,16 @@ export const scrapper = async (config: any, role: string, maxJobs = 10) => {
 
         const page = await browser.newPage();
 
-        const updatedRole = role.replace(" ", "-");
+        let updatedRole = role;
+        if(platform === "internshala"){
+            updatedRole = role.replace(" ", "-");
+        } else if(platform === "cuvette"){
+            updatedRole = role.replace(" ", "%20");
+        } else {
+            updatedRole = role.replace(" ", "-");
+        }
 
-        const url = config.loadType === 'pagination' ? config.searchUrl(role) : config.baseUrl;
+        const url = config.loadType === 'pagination' ? config.searchUrl(updatedRole) : config.baseUrl;
 
         await page.goto(url, {
             waitUntil: 'networkidle'
@@ -36,26 +45,34 @@ export const scrapper = async (config: any, role: string, maxJobs = 10) => {
         if (config.loadType === 'pagination') {
             await paginateUntil(page, config, maxJobs);
         }
-        
+
         const jobs = await page.$$eval(
             config.selectors.container,
             (elements, { limit, selectors, platform }) => {
-              return elements.slice(0, limit).map((el) => ({
-                title: el.querySelector(selectors.title)?.textContent?.trim() || "",
-                description: el.querySelector(selectors.description)?.textContent?.trim() || "",
-                companyName: el.querySelector(selectors.companyName)?.textContent?.trim() || "",
-                location: el.querySelector(selectors.location)?.textContent?.trim() || "",
-                salary: el.querySelector(selectors.salary)?.textContent?.trim() || "",
-                allowedYears: "",
-                requiredExperience: el.querySelector(selectors.experience)?.textContent?.trim() || "",
-                skills: Array.from(el.querySelectorAll(selectors.skills)).map((s: any) => s.textContent?.trim() || ""),
-                jobUrl: el.querySelector(selectors.jobUrl)?.getAttribute("href") || "",
-                postPlatform: platform,
-                experienceLevel: "",
-                position: "",
-                postedAt: null,
-                createdAt: null,
-              }));
+            //   return elements.slice(0, limit).map((el) => ({
+            //     title: el.querySelector(selectors.title)?.textContent?.trim() || "",
+            //     description: el.querySelector(selectors.description)?.textContent?.trim() || "",
+            //     companyName: el.querySelector(selectors.companyName)?.textContent?.trim() || "",
+            //     location: el.querySelector(selectors.location)?.textContent?.trim() || "",
+            //     salary: el.querySelector(selectors.salary)?.textContent?.trim() || "",
+            //     allowedYears: "",
+            //     requiredExperience: el.querySelector(selectors.experience)?.textContent?.trim() || "",
+            //     skills: Array.from(el.querySelectorAll(selectors.skills)).map((s: any) => s.textContent?.trim() || ""),
+            //     jobUrl: el.querySelector(selectors.jobUrl)?.getAttribute("href") || "",
+            //     postPlatform: platform,
+            //     experienceLevel: "",
+            //     position: "",
+            //     postedAt: null,
+            //     createdAt: null,
+            //   }));
+            // },
+            // {
+            //   limit: maxJobs,
+            //   selectors: config.selectors,
+            //   platform: config.baseUrl,
+            // }
+
+            return elements.slice(0, limit).map(el => el.outerHTML);
             },
             {
               limit: maxJobs,
@@ -63,10 +80,8 @@ export const scrapper = async (config: any, role: string, maxJobs = 10) => {
               platform: config.baseUrl,
             }
           );
-          
 
         await browser.close();
-
         return jobs;  
     } catch (err) {
         console.log("Error in scrapper...", err);

@@ -3,13 +3,15 @@ import { GoogleGenAI } from "@google/genai";
 export const aiFilteration = async (chunkedData: any) => {
   const finalFormattedJsonArr: any = [];
 
-  chunkedData.map(async (cd: any) => {
+  try {
     const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    const prompt = `
+    const results = await Promise.all(
+      chunkedData.map(async (cd: any) => {
+        const prompt = `
 You are a strict formatter assistant.
 
-Your job is to take an array of **chunked raw data, scraped job objects JSON** and clean/normalize them and also remove the /n and other unnecessary things so that it fits in the following exact schema:
+Your job is to take an array of **chunked raw data of html, scraped job html** and clean/normalize them and also remove the /n and other unnecessary things so that it fits in the following exact schema:
 
 {
   title: string,
@@ -34,34 +36,46 @@ Your job is to take an array of **chunked raw data, scraped job objects JSON** a
 
 Here is the data:
 
-${JSON.stringify(chunkedData)}
+${JSON.stringify(cd)}
 `;
 
-    const result = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
+        try {
+          const result = await genAI.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+          });
 
-    console.log("result candidates: ", result.candidates);
+          let raw = result?.text?.trim();
 
-    let raw = result?.text?.trim();
+          // Remove markdown wrapping if present
+          if (raw?.startsWith("```json")) {
+            raw = raw
+              .replace(/```json\s*/i, "")
+              .replace(/```$/, "")
+              .trim();
+          }
 
-    // Strip markdown code block (if AI returns it)
-    if (raw?.startsWith("```json")) {
-      raw = raw
-        .replace(/```json\s*/i, "")
-        .replace(/```$/, "")
-        .trim();
+          const parsed = JSON.parse(raw as string);
+          return parsed;
+
+        } catch (err) {
+          console.error("❌ Error processing chunk:", err);
+          return null;
+        }
+      })
+    );
+
+    // Filter out failed results
+    for (const item of results) {
+      if (item) {
+        finalFormattedJsonArr.push(...item); // assuming each is an array
+      }
     }
 
-    console.log("raw: ", raw);
+    return finalFormattedJsonArr;
 
-    try {
-      finalFormattedJsonArr.push(JSON.parse(raw as string));
-    } catch (err) {
-      console.error("❌ JSON parsing failed:", raw);
-    }
-  });
-
-  return finalFormattedJsonArr;
+  } catch (err) {
+    console.error("❌ AI Filtration Failed:", err);
+    return [];
+  }
 };

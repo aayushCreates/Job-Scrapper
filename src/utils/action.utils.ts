@@ -46,6 +46,8 @@ export const paginateUntil = async (page: any, config: any, maxJobs: number) => 
             count = await page.$$eval(config.selectors.container, (els: any) => els.length);
             tries++;
         }
+
+        console.log("count: ", count);
     } catch (err) {
         console.log("Error in the pagination");
     }

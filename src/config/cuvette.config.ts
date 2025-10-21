@@ -1,8 +1,14 @@
 
 
+const jobUrl = (role: string, pageNo=1)=> (
+  `https://api.cuvette.tech/api/v1/externaljobs?search=${role}&page=${pageNo}`
+)
+
 export const cuvetteConfig = {
   baseUrl: "https://www.cuvette.tech",
-  searchUrl: (role: string, page = 1) => `https://www.cuvette.tech/jobs?search=${encodeURIComponent(role)}&page=${page}`,
+  // searchUrl: (role: string, page = 1) => `https://www.cuvette.tech/jobs?search=${encodeURIComponent(role)}&page=${page}`,
+  // "https://api.cuvette.tech/api/v1/externaljobs?search=software%20developer,full%20stack%20developer&pageNumber=1"
+  searchUrl: jobUrl,
   loadType: "pagination",
   selectors: {
     container: ".cust-job-tuple",
