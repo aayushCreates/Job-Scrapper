@@ -16,6 +16,7 @@
     "@google/genai": "^1.25.0",
     "cheerio": "^1.1.2",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "morgan": "^1.10.1",
     "playwright": "^1.56.1",
@@ -23,6 +24,7 @@
     "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {
+    "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.3",
     "@types/node": "^24.8.1",
     "prisma": "^6.17.1",

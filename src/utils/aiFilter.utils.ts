@@ -38,7 +38,7 @@ ${JSON.stringify(chunkedData)}
 `;
 
     const result = await genAI.models.generateContent({
-      model: "gemini-2.0-pro",
+      model: "gemini-2.5-flash",
       contents: prompt,
     });
 
@@ -51,6 +51,8 @@ ${JSON.stringify(chunkedData)}
         .replace(/```$/, "")
         .trim();
     }
+
+    console.log("raw: ", raw);
 
     try {
       finalFormattedJsonArr.push(JSON.parse(raw as string));

@@ -1,18 +1,21 @@
 
 
 export const internshalaConfig = {
-    baseUrl: "https://www.naukri.com",
-    searchUrl: (role: string, page = 1) => `https://www.naukri.com/${encodeURIComponent(role)}-jobs-${page}`,
-    loadType: "pagination",
-    selectors: {
-      container: ".cust-job-tuple",
-      title: "h2 a.title",
-      companyName: "a.comp-name",
-      location: ".locWdth",
-      experience: ".expwdth",
-      description: ".job-desc",
-      skills: ".tags-gt li",
-      jobUrl: "h2 a.title",
-      nextButton: "a[aria-label='Next']"
-    }
+  baseUrl: "https://internshala.com",
+  searchUrl: (role: string, page = 1) =>
+    `https://internshala.com/internships/${encodeURIComponent(role)}-internship/page-${page}`,
+
+  loadType: "pagination",
+
+  selectors: {
+    container: ".individual_internship", 
+    title: ".job-title-href",
+    companyName: ".company_name",
+    location: ".locations",
+    experience: ".row-1-item i.ic-16-briefcase + span", 
+    description: ".about_job .text",
+    skills: ".job_skills .job_skill",
+    jobUrl: ".job-title-href",
+    nextButton: ".next-page" 
+  }
 }
