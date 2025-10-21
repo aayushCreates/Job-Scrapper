@@ -10,9 +10,9 @@ export const scrapper = async (config: any, role: string, maxJobs = 10) => {
 
         const page = await browser.newPage();
 
-        // const url = config.loadType === 'pagination' ? config.searchUrl(role) : config.baseUrl;
+        const updatedRole = role.replace(" ", "-");
 
-        const url = config.searchUrl;
+        const url = config.loadType === 'pagination' ? config.searchUrl(role) : config.baseUrl;
 
         await page.goto(url, {
             waitUntil: 'networkidle'
@@ -36,20 +36,20 @@ export const scrapper = async (config: any, role: string, maxJobs = 10) => {
         if (config.loadType === 'pagination') {
             await paginateUntil(page, config, maxJobs);
         }
-
+        
         const jobs = await page.$$eval(
             config.selectors.container,
-            (elements, { limit, config, platform }) => {
+            (elements, { limit, selectors, platform }) => {
               return elements.slice(0, limit).map((el) => ({
-                title: el.querySelector(config.selectors.title)?.textContent?.trim() || "",
-                description: el.querySelector(config.selectors.description)?.textContent?.trim() || "",
-                companyName: el.querySelector(config.selectors.companyName)?.textContent?.trim() || "",
-                location: el.querySelector(config.selectors.location)?.textContent?.trim() || "",
-                salary: el.querySelector(config.selectors.salary)?.textContent?.trim() || "",
+                title: el.querySelector(selectors.title)?.textContent?.trim() || "",
+                description: el.querySelector(selectors.description)?.textContent?.trim() || "",
+                companyName: el.querySelector(selectors.companyName)?.textContent?.trim() || "",
+                location: el.querySelector(selectors.location)?.textContent?.trim() || "",
+                salary: el.querySelector(selectors.salary)?.textContent?.trim() || "",
                 allowedYears: "",
-                requiredExperience: el.querySelector(config.selectors.experience)?.textContent?.trim() || "",
-                skills: Array.from(el.querySelectorAll(config.selectors.skills)).map((s: any) => s.textContent?.trim() || ""),
-                jobUrl: el.querySelector(config.selectors.jobUrl)?.getAttribute("href") || "",
+                requiredExperience: el.querySelector(selectors.experience)?.textContent?.trim() || "",
+                skills: Array.from(el.querySelectorAll(selectors.skills)).map((s: any) => s.textContent?.trim() || ""),
+                jobUrl: el.querySelector(selectors.jobUrl)?.getAttribute("href") || "",
                 postPlatform: platform,
                 experienceLevel: "",
                 position: "",
@@ -59,11 +59,11 @@ export const scrapper = async (config: any, role: string, maxJobs = 10) => {
             },
             {
               limit: maxJobs,
-              config,
+              selectors: config.selectors,
               platform: config.baseUrl,
             }
           );
-
+          
 
         await browser.close();
 

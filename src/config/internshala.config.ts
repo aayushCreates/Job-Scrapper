@@ -1,9 +1,12 @@
 
+const getJobUrl = (role: string, page = 1) =>
+    (
+      `https://internshala.com/jobs/${encodeURIComponent(role)}-internship/page-${page}`
+    )
 
 export const internshalaConfig = {
   baseUrl: "https://internshala.com",
-  searchUrl: 'https://internshala.com/jobs',
-
+  searchUrl: getJobUrl,
   loadType: "pagination",
 
   selectors: {
@@ -15,6 +18,6 @@ export const internshalaConfig = {
     description: ".about_job .text",
     skills: ".job_skills .job_skill",
     jobUrl: ".job-title-href",
-    nextButton: ".next-page"
+    nextButton: ".next-page" 
   }
 }

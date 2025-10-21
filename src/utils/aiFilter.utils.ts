@@ -9,7 +9,7 @@ export const aiFilteration = async (chunkedData: any) => {
     const prompt = `
 You are a strict formatter assistant.
 
-Your job is to take an array of **raw, scraped job objects** and clean/normalize them to fit the following exact schema:
+Your job is to take an array of **chunked raw data, scraped job objects JSON** and clean/normalize them and also remove the /n and other unnecessary things so that it fits in the following exact schema:
 
 {
   title: string,
@@ -41,6 +41,8 @@ ${JSON.stringify(chunkedData)}
       model: "gemini-2.5-flash",
       contents: prompt,
     });
+
+    console.log("result candidates: ", result.candidates);
 
     let raw = result?.text?.trim();
 

@@ -1,14 +1,14 @@
 
 
-export const chunkData = (jobDetails: any, limit: number)=> {
+export const chunkData = (jobsArr: any, limit: number)=> {
     const chunks: any = [];
     let i = 0;
 
-    while(i < jobDetails.length) {
-        chunks.push(jobDetails.slice(i, limit + 1));
+    while(i < jobsArr.length) {
+        chunks.push(jobsArr.slice(i, limit + 1));
         i++;
     }  
-    
+
     return chunks;
 }
  
