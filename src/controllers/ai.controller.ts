@@ -21,6 +21,8 @@ export const getScrappedJobs = async (req: Request, res: Response, next: NextFun
         if (platform === "internshala") {
             const scrappedHtmlArr = await scrapper(internshalaConfig, role, maxJobs);
 
+            console.log("scrapped arr: ", scrappedHtmlArr);
+
             if (!scrappedHtmlArr || scrappedHtmlArr.length === 0) {
                 return res.status(200).json({
                     success: false,
@@ -28,23 +30,23 @@ export const getScrappedJobs = async (req: Request, res: Response, next: NextFun
                 })
             };
 
-            const processedData = refineData(scrappedHtmlArr, internshalaConfig);
-            const chunksLimit = 10;
-            const chunkedData = chunkData(processedData, chunksLimit);
+            // const processedData = refineData(scrappedHtmlArr, internshalaConfig);
+            // const chunksLimit = 10;
+            // const chunkedData = chunkData(processedData, chunksLimit);
 
-            const aiFormattedData = await aiFilteration(chunkedData);
-            if (aiFormattedData.length === 0) {
-                return res.status(200).json({
-                    success: false,
-                    message: "Jobs are not found after scrapping"
-                })
-            };
+            // const aiFormattedData = await aiFilteration(chunkedData);
+            // if (aiFormattedData.length === 0) {
+            //     return res.status(200).json({
+            //         success: false,
+            //         message: "Jobs are not found after scrapping"
+            //     })
+            // };
 
-            res.status(200).json({
-                success: true,
-                message: "Jobs are scrapped successfully",
-                data: aiFormattedData
-            });
+            // res.status(200).json({
+            //     success: true,
+            //     message: "Jobs are scrapped successfully",
+            //     data: aiFormattedData
+            // });
 
         } else if (platform === "cuvette") {
             const scrappedHtmlArr = await scrapper(cuvetteConfig, role, maxJobs);
@@ -108,13 +110,7 @@ export const getScrappedJobs = async (req: Request, res: Response, next: NextFun
                 message: "Jobs are scrapped successfully",
                 data: aiFormattedData
             });
-        } else {
-            return res.status(400).json({
-                success: false,
-                message: `Platform "${platform}" is not supported. Supported platforms: internshala, cuvette, naukri`
-            });
         }
-
     } catch (err) {
         console.log("Error in scrapping jobs: ", err);
         return res.status(500).json({

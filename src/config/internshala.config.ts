@@ -2,8 +2,7 @@
 
 export const internshalaConfig = {
   baseUrl: "https://internshala.com",
-  searchUrl: (role: string, page = 1) =>
-    `https://internshala.com/internships/${encodeURIComponent(role)}-internship/page-${page}`,
+  searchUrl: 'https://internshala.com/jobs',
 
   loadType: "pagination",
 
@@ -16,6 +15,6 @@ export const internshalaConfig = {
     description: ".about_job .text",
     skills: ".job_skills .job_skill",
     jobUrl: ".job-title-href",
-    nextButton: ".next-page" 
+    nextButton: ".next-page"
   }
 }
