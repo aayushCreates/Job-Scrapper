@@ -16,11 +16,10 @@ model ScrappedJobs {
   companyName String
   description String
   requiredSkills  String[]
-  allowedYears  String[]
+  allowedBatches  String[]
   allowedBranches String[]
   salary  String
   jobUrl  String
-  skills  String[]
   location  String
   requiredExperience  String
   postPlatform  String
