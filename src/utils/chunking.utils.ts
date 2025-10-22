@@ -1,5 +1,4 @@
 
-
 export const chunkData = (jobsArr: any[], limit: number) => {
     const chunks: any[] = [];
     let i = 0;
