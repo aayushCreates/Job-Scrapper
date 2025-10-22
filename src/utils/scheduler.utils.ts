@@ -1,10 +1,11 @@
 import { naukriConfig } from "@/config/naukri.config";
 import { scrapper } from "@/scripts/scrapper";
 import cron from "node-cron";
+import { retry } from "./retry.utils";
+import randomDelay from "./rateLimit.utils";
 
 let isRunning = false;
 
-// Runs every 6 hours (you can change it)
 cron.schedule("0 */6 * * *", async () => {
   if (isRunning) return console.log("⏳ Previous job still running...");
   isRunning = true;
@@ -26,13 +27,28 @@ cron.schedule("0 */6 * * *", async () => {
     for (const role of roles) {
       console.log(`\n⚙️ Scraping for role: ${role}`);
 
-      const naukriJobs = await scrapper(naukriConfig, role, 10, "naukri");
-      const cuvetteJobs = await scrapper(naukriConfig, role, 10, "cuvette");
-      const internshalaJobs = await scrapper(
-        naukriConfig,
-        role,
-        10,
-        "internshala"
+      await randomDelay();
+
+      const naukriJobs = await retry(
+        () => scrapper(naukriConfig, role, 10, "naukri"),
+        3,
+        1000
+      );
+
+      await randomDelay();
+
+      const cuvetteJobs = await retry(
+        () => scrapper(naukriConfig, role, 10, "cuvette"),
+        3,
+        1000
+      );
+
+      await randomDelay();
+
+      const internshalaJobs = await retry(
+        () => scrapper(naukriConfig, role, 10, "internshala"),
+        3,
+        1000
       );
 
       console.log(`✅ ${role}: Naukri ${naukriJobs.length} jobs`);
