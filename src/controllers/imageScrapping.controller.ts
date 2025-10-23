@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import cloudinary from 'cloudinary';
+import cloudinary from "cloudinary";
 
 export const imageUpload = async (
   req: Request,
@@ -7,9 +7,6 @@ export const imageUpload = async (
   next: NextFunction
 ) => {
   try {
-
-    const path = await cloudinary.v2.uploader.upload()
-
     const fileCloudPath = req.file?.path;
     if (!fileCloudPath) {
       return res.status(404).json({
