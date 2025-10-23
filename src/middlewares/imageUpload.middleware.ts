@@ -1,4 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import multer from 'multer';
 
 export const imageUpload = async () => {
   try {
@@ -8,8 +10,19 @@ export const imageUpload = async () => {
       api_secret: process.env.CLOUDINARY_API_SECRET,
     });
 
-    
+    //  storage part creation for this img upload
+    const storage = new CloudinaryStorage({
+        cloudinary,
+        params: {
+            // folder: "uploads",
+            allowed_formats: ["jpg", "png", "jpeg", "webp"],
+        }
+    });
 
+    //  creation of upload middleware
+    const upload = multer({
+        storage
+    });
   } catch (err) {
     console.log("Error in image upload", err);
   }
