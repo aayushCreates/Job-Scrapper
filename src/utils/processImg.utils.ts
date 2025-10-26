@@ -3,14 +3,14 @@ import Tesseract from "tesseract.js"
 
 
 export const extractJobDetailsFromImage = async (imgPath: string)=> {
-    const { data } = Tesseract.recognize(imgPath, "eng");
+    const { data } = await Tesseract.recognize(imgPath, "eng");
 
     const prompt = `
     Extract structured job info from this text:
     ${data?.text}
   
     Return JSON with:
-    { "company": "", "title": "", "jobType": "", "keywords": [] }
+    { "companyName": "", "title": "", "jobType": "", "keywords": [] }
     `;
 
     try {
@@ -29,7 +29,6 @@ export const extractJobDetailsFromImage = async (imgPath: string)=> {
         });
 
         return JSON.parse(response?.choices[0]?.message?.content as string);
-
     } catch(err) {
         console.log("Error in generting response after the ocr passed to AI");
     }
