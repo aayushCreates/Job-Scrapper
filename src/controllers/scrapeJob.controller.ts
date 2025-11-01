@@ -1,7 +1,7 @@
-import { findJobUrlAndHtmlContent } from "@/scripts/imageJobScrapper";
-import { formattedJobDetails } from "@/utils/formatJobDetails";
-import { extractJobDetailsFromImage } from "@/utils/processImg.utils";
-import { findCompanyWebsite } from "@/utils/validateJob.utils";
+import { findJobUrlAndHtmlContent } from "../scripts/imageJobScrapper";
+import { formattedJobDetails } from "../utils/formatJobDetails";
+import { extractJobDetailsFromImage } from "../utils/processImg.utils";
+import { findCompanyWebsite } from "../utils/validateJob.utils";
 import { Request, Response, NextFunction } from "express";
 
 export const getScrappedJob = async (
