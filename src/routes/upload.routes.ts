@@ -1,11 +1,11 @@
 import { uploadImage } from "../controllers/upload.controller";
 import { upload } from "../middlewares/multer.middleware";
-import { Router } from "express";
+import { Request, Response, NextFunction, Router } from "express";
 
 const uploadRouter =  Router();
 
 uploadRouter.post('/', upload.single("image"), uploadImage);
-uploadRouter.use((err, req, res, next) => {
+uploadRouter.use((err, req: Request, res: Response, next: NextFunction) => {
     console.error("🔥 Multer or middleware error:", err);
     res.status(500).json({
       message: "Middleware failed",
