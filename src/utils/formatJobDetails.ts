@@ -22,7 +22,7 @@ export const formattedJobDetails = async (jobDetailsHtml: any) => {
         updatedAt: string (ISO 8601)
     }
     
-    if you find that a particular key data is not present then treat as empty or according to the dataType.
+    if you find that a particular key data is not present then treat as empty or according to the dataType. and also if you find that same position or title are present more than once then according to the post data give me different different json formatted data for job title or position.
 
     ### Rules:
         - Normalize \`requiredSkills\` to an array (e.g. split on commas).

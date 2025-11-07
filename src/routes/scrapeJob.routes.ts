@@ -3,7 +3,7 @@ import { Router } from "express";
 
 const scrappedJobs = Router();
 
-scrappedJobs.get('/', getScrappedJob);
+scrappedJobs.post('/', getScrappedJob);
 
 
 export default scrappedJobs;

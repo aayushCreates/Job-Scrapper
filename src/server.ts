@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from 'cors';
+import morgan from "morgan";
 
 const app = express();
 
@@ -12,6 +13,8 @@ app.use(
     origin: ["http://localhost:5173", "http://localhost:3030"],
   })
 );
+
+app.use(morgan('dev'));
 
 import uploadRouter from "./routes/upload.routes";
 import scrappedJobs from "./routes/scrapeJob.routes";

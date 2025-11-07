@@ -1,3 +1,4 @@
+import { findCareerPage } from "@/scripts/googleSearch.script";
 import { findJobUrlAndHtmlContent } from "../scripts/imageJobScrapper";
 import { formattedJobDetails } from "../utils/formatJobDetails";
 import { extractJobDetailsFromImage } from "../utils/processImg.utils";
@@ -10,15 +11,15 @@ export const getScrappedJob = async (
   next: NextFunction
 ) => {
   try {
-    const { imgUrl } = req.body;
-    if (!imgUrl) {
+    const { image } = req.body;
+    if (!image) {
       return res.status(404).json({
         success: false,
         message: "File img not found",
       });
     }
 
-    const imgDetails: any = extractJobDetailsFromImage(imgUrl);
+    const imgDetails: any = await extractJobDetailsFromImage(image);
     if (!imgDetails) {
       return res.status(404).json({
         success: false,
@@ -26,17 +27,26 @@ export const getScrappedJob = async (
       });
     }
 
-    const companyWebsite = await findCompanyWebsite(
-      imgDetails?.company as string
-    );
-    if (!companyWebsite) {
+    const companyCareerData = await findCareerPage(imgDetails.companyName);
+
+    // const companyWebsite = await findCompanyWebsite(
+    //   imgDetails?.companyName as string
+    // );
+
+    // if (!companyWebsite) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: "Company website cannot found",
+    //   });
+    // }
+    if (!companyCareerData) {
       return res.status(404).json({
         success: false,
-        message: "Company website cannot found",
+        message: "Company career webpage cannot found",
       });
     }
 
-    const jobHtml = findJobUrlAndHtmlContent(companyWebsite as string);
+    const jobHtml = await findJobUrlAndHtmlContent(companyCareerData.link as string);
     if (!jobHtml) {
       return res.status(404).json({
         success: false,
@@ -44,7 +54,11 @@ export const getScrappedJob = async (
       });
     }
 
-    const formattedJob = formattedJobDetails(jobHtml);
+    console.log("html: ", jobHtml);
+
+    const formattedJob = await formattedJobDetails(jobHtml);
+    console.log("formatted job: ", formattedJob);
+
     if (!formattedJob) {
       return res.status(404).json({
         success: false,
