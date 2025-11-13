@@ -40,7 +40,8 @@ export const getScrappedJobs = async (req: Request, res: Response, next: NextFun
                     message: "Jobs are not found after scrapping"
                 })
             };
-
+console.log("formatted jobs: ", aiFormattedData);
+console.log("formatted jobs: ", aiFormattedData.length);
             res.status(200).json({
                 success: true,
                 message: "Jobs are scrapped successfully",
@@ -58,6 +59,8 @@ export const getScrappedJobs = async (req: Request, res: Response, next: NextFun
 
                 ++page;
             }
+
+            console.log("dfsbghfdsadfghghfdsafgheawsdf", totalJobs);
             res.status(200).json({
                 success: true,
                 message: "Jobs are scrapped successfully",
@@ -83,6 +86,7 @@ export const getScrappedJobs = async (req: Request, res: Response, next: NextFun
             const aiFormattedData = await aiFilteration(chunkedData);
 
             console.log("ai format: ", aiFormattedData);
+            console.log("ai format jobs length: ", aiFormattedData.length);
 
             if (aiFormattedData.length === 0) {
                 return res.status(200).json({
@@ -90,6 +94,9 @@ export const getScrappedJobs = async (req: Request, res: Response, next: NextFun
                     message: "Jobs are not found after scrapping"
                 })
             };
+
+            console.log("formatted jobs of naukri", aiFormattedData);
+            console.log("formatted jobs of naukri", aiFormattedData.length);
 
             res.status(200).json({
                 success: true,

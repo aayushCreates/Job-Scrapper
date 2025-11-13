@@ -18,10 +18,11 @@ app.use(morgan('dev'));
 
 import uploadRouter from "./routes/upload.routes";
 import scrappedJobs from "./routes/scrapeJob.routes";
+import aiScrapperRoutes from "./routes/ai.routes";
 
 app.use('/upload', uploadRouter);
 app.use('/job/scrapped/data', scrappedJobs);
-// app.use('/job-board/jobs', otherJobs);
+app.use('/job-board/scrape/jobs', aiScrapperRoutes);
 
 // const port = process.env.PORT || 5000;
 const port = 8080;

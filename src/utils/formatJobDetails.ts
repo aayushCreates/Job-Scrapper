@@ -1,12 +1,58 @@
 import OpenAI from "openai";
+import * as cheerio from "cheerio"; // Import cheerio
 
-export const formattedJobDetails = async (jobDetailsHtml: any) => {
+// Helper function to extract relevant job content from HTML
+// const extractJobContent = (htmlContent: string): string => {
+//   const $ = cheerio.load(htmlContent);
+//   let extractedText = "";
+
+//   // Prioritize common job detail sections
+//   const selectors = [
+//     "h1", "h2", "h3", "h4", "h5", "h6", // Headings
+//     "p", // Paragraphs
+//     "li", // List items
+//     "div.job-description", // Common class names
+//     "div.description",
+//     "div.content",
+//     "section",
+//     "article",
+//   ];
+
+//   selectors.forEach(selector => {
+//     $(selector).each((i, element) => {
+//       const text = $(element).text().trim();
+//       if (text) {
+//         extractedText += text + "\n\n"; // Add some separation
+//       }
+//     });
+//   });
+
+//   // Fallback: if not much is found, get text from body or a main container
+//   if (extractedText.length < 200) { // Arbitrary threshold to check if enough content was extracted
+//     extractedText = $("body").text().trim();
+//   }
+
+//   // Limit the extracted text to a reasonable size to avoid exceeding token limits
+//   // This is a heuristic, actual limit might vary based on model and prompt size
+//   const MAX_CONTENT_LENGTH = 4000; // Roughly 1000 tokens, adjust as needed
+//   if (extractedText.length > MAX_CONTENT_LENGTH) {
+//     extractedText = extractedText.substring(0, MAX_CONTENT_LENGTH) + "... [content truncated]";
+//   }
+
+//   return extractedText;
+// };
+
+
+export const formattedJobDetails = async (relevantJobContent: any) => {
   const client = new OpenAI({
     apiKey: process.env.OPEN_AI_API_KEY,
   });
 
+  // Extract concise content from the HTML
+  // const conciseJobContent = extractJobContent(jobDetailsHtml);
+
   const prompt = `You are a strict formatter assistant.
-    And your job is to make the given raw scrapped html content of the job into proper json format given below
+    And your job is to make the given raw scrapped job content into proper json format given below
     {
         title: string,
         position: string,
@@ -31,7 +77,7 @@ export const formattedJobDetails = async (jobDetailsHtml: any) => {
         - Return only the JSON array. No markdown, no explanation.
 
         Here is the data:
-        ${JSON.stringify(jobDetailsHtml)}
+        ${relevantJobContent}
     `;
 
   const response = await client.responses.create({

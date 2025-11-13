@@ -4,6 +4,7 @@ import { formattedJobDetails } from "../utils/formatJobDetails";
 import { extractJobDetailsFromImage } from "../utils/processImg.utils";
 import { findCompanyWebsite } from "../utils/validateJob.utils";
 import { Request, Response, NextFunction } from "express";
+import { JobContainer } from "@/middlewares/htmlParser.middleware";
 
 export const getScrappedJob = async (
   req: Request,
@@ -29,16 +30,6 @@ export const getScrappedJob = async (
 
     const companyCareerData = await findCareerPage(imgDetails.companyName);
 
-    // const companyWebsite = await findCompanyWebsite(
-    //   imgDetails?.companyName as string
-    // );
-
-    // if (!companyWebsite) {
-    //   return res.status(404).json({
-    //     success: false,
-    //     message: "Company website cannot found",
-    //   });
-    // }
     if (!companyCareerData) {
       return res.status(404).json({
         success: false,
@@ -46,17 +37,19 @@ export const getScrappedJob = async (
       });
     }
 
-    const jobHtml = await findJobUrlAndHtmlContent(companyCareerData.link as string);
-    if (!jobHtml) {
+    const careerPageHtml = await findJobUrlAndHtmlContent(companyCareerData.link as string);
+    if (!careerPageHtml) {
       return res.status(404).json({
         success: false,
         message: "Job not found",
       });
     }
 
-    console.log("html: ", jobHtml);
+    const relevantJobContent = JobContainer(careerPageHtml);
 
-    const formattedJob = await formattedJobDetails(jobHtml);
+    console.log("relevent job content: ", relevantJobContent);
+
+    const formattedJob = await formattedJobDetails(careerPageHtml);
     console.log("formatted job: ", formattedJob);
 
     if (!formattedJob) {
