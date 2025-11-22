@@ -57,7 +57,6 @@ ${JSON.stringify(cd)}
 
           const parsed = JSON.parse(raw as string);
           return parsed;
-
         } catch (err) {
           console.error("❌ Error processing chunk:", err);
           return null;
@@ -73,7 +72,6 @@ ${JSON.stringify(cd)}
     }
 
     return finalFormattedJsonArr;
-
   } catch (err) {
     console.error("❌ AI Filtration Failed:", err);
     return [];

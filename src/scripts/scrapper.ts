@@ -48,30 +48,7 @@ export const scrapper = async (config: any, role: string, maxJobs = 5, platform:
 
         const jobs = await page.$$eval(
             config.selectors.container,
-            (elements, { limit, selectors, platform }) => {
-            //   return elements.slice(0, limit).map((el) => ({
-            //     title: el.querySelector(selectors.title)?.textContent?.trim() || "",
-            //     description: el.querySelector(selectors.description)?.textContent?.trim() || "",
-            //     companyName: el.querySelector(selectors.companyName)?.textContent?.trim() || "",
-            //     location: el.querySelector(selectors.location)?.textContent?.trim() || "",
-            //     salary: el.querySelector(selectors.salary)?.textContent?.trim() || "",
-            //     allowedYears: "",
-            //     requiredExperience: el.querySelector(selectors.experience)?.textContent?.trim() || "",
-            //     skills: Array.from(el.querySelectorAll(selectors.skills)).map((s: any) => s.textContent?.trim() || ""),
-            //     jobUrl: el.querySelector(selectors.jobUrl)?.getAttribute("href") || "",
-            //     postPlatform: platform,
-            //     experienceLevel: "",
-            //     position: "",
-            //     postedAt: null,
-            //     createdAt: null,
-            //   }));
-            // },
-            // {
-            //   limit: maxJobs,
-            //   selectors: config.selectors,
-            //   platform: config.baseUrl,
-            // }
-
+            (elements, { limit }) => {
             return elements.slice(0, limit).map(el => el.outerHTML);
             },
             {
