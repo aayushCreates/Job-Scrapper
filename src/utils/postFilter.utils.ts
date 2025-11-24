@@ -45,13 +45,12 @@ Rules:
         const postText = typeof cd === "string" ? cd : cd?.text || String(cd);
 
         const prompt = `${promptBase}
+          Here is the LinkedIn post between the markers. Extract only the JSON object:
 
-Here is the LinkedIn post between the markers. Extract only the JSON object:
-
-<<<POST_START>>>
-${postText}
-<<<POST_END>>>
-`;
+          <<<POST_START>>>
+          ${postText}
+          <<<POST_END>>>
+          `;
 
         try {
           const result = await client.models.generateContent({
@@ -59,16 +58,19 @@ ${postText}
             contents: prompt,
           });
 
-          // get the returned string robustly (support both .text and .text())
           let raw = "";
           if (!result) {
             console.warn("⚠️ empty result from model");
             continue;
           }
+          
+          //  to remove the output format issue if happens
           if (typeof (result as any).text === "function") {
             raw = ((result as any).text() || "").trim();
           } else {
-            raw = ((result as any).text) ? String((result as any).text).trim() : "";
+            raw = (result as any).text
+              ? String((result as any).text).trim()
+              : "";
           }
 
           if (!raw) {
@@ -76,31 +78,39 @@ ${postText}
             continue;
           }
 
-          // remove common fences
-          raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+          raw = raw
+            .replace(/```json/gi, "")
+            .replace(/```/g, "")
+            .trim();
 
-          // extract first JSON object substring (robust)
+          // Gemini adds extra sentences
           const jsonMatch = raw.match(/\{[\s\S]*\}/);
           if (!jsonMatch) {
-            console.warn("⚠️ No JSON object found in model output. Raw:", raw.slice(0, 400));
+            console.warn(
+              "⚠️ No JSON object found in model output. Raw:",
+              raw.slice(0, 400)
+            );
             continue;
           }
 
           const jsonText = jsonMatch[0];
 
-          // safe parse
           let parsed: any;
           try {
             parsed = JSON.parse(jsonText);
           } catch (err) {
             console.warn("⚠️ JSON.parse failed. Attempting minor fixes...");
 
-            // minor attempt: remove trailing commas
-            const cleaned = jsonText.replace(/,\s*}/g, "}").replace(/,\s*]}/g, "]}");
+            const cleaned = jsonText
+              .replace(/,\s*}/g, "}")
+              .replace(/,\s*]}/g, "]}");
             try {
               parsed = JSON.parse(cleaned);
             } catch (err2) {
-              console.error("❌ JSON parse ultimately failed for post. Raw JSON:", jsonText.slice(0, 400));
+              console.error(
+                "❌ JSON parse ultimately failed for post. Raw JSON:",
+                jsonText.slice(0, 400)
+              );
               continue;
             }
           }
