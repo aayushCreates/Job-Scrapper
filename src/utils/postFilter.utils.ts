@@ -4,18 +4,19 @@ export const linkedinPostFilter = async (chunkedData: any[]) => {
   try {
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    const processedResults: any[] = []; // final array
+    const processedResults: any[] = [];
 
     const promptBase = `
 You are a strict data extraction assistant.
 
-You will receive raw text from a scraped LinkedIn post that includes noise (names, hashtags, “Follow”, “Feed post”, timestamps).
+You will receive raw text from a scraped LinkedIn post.
 
 Extract ONLY useful information needed by a college TPO.
 
 Return a SINGLE JSON object in this schema:
 
 {
+  "nameOfPosted": string | null,
   "description": string | null,
   "batch": string | null,
   "location": string | null,
@@ -30,56 +31,95 @@ Return a SINGLE JSON object in this schema:
 }
 
 Rules:
-- Clean description completely.
+- Clean description completely (remove repeated headers, hashtags, "Feed post", "Follow", "…more", likes/comments, timestamps).
 - Extract email, phone, WhatsApp, URLs.
 - No guessing. Null if not found.
 - Always return VALID JSON only.
-- No markdown or code fences.
+- No markdown or code fences in the output.
 `;
 
-    for (const cd of chunkedData) {
-      const postText = typeof cd === "string" ? cd : cd.text || cd;
+    // iterate chunkedData: supports array-of-arrays like [[post1, post2], [post3]]
+    for (const cdArr of chunkedData) {
+      for (const cd of cdArr) {
+        // resolve post text whether cd is string or { text: '...' }
+        const postText = typeof cd === "string" ? cd : cd?.text || String(cd);
 
-      const prompt = `${promptBase}\n\nRAW POST:\n${postText}`;
+        const prompt = `${promptBase}
 
-      try {
-        const result = await client.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: prompt,
-        });
+Here is the LinkedIn post between the markers. Extract only the JSON object:
 
-        let raw = result?.text?.trim() || "";
+<<<POST_START>>>
+${postText}
+<<<POST_END>>>
+`;
 
-        // remove markdown fences
-        raw = raw
-          .replace(/```json/gi, "")
-          .replace(/```/g, "")
-          .replace(/^Here.*?\n/gi, "")  // remove "Here is your output"
-          .trim();
-
-        let parsed;
         try {
-          parsed = JSON.parse(raw);
+          const result = await client.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+          });
+
+          // get the returned string robustly (support both .text and .text())
+          let raw = "";
+          if (!result) {
+            console.warn("⚠️ empty result from model");
+            continue;
+          }
+          if (typeof (result as any).text === "function") {
+            raw = ((result as any).text() || "").trim();
+          } else {
+            raw = ((result as any).text) ? String((result as any).text).trim() : "";
+          }
+
+          if (!raw) {
+            console.warn("⚠️ model returned empty text");
+            continue;
+          }
+
+          // remove common fences
+          raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+          // extract first JSON object substring (robust)
+          const jsonMatch = raw.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) {
+            console.warn("⚠️ No JSON object found in model output. Raw:", raw.slice(0, 400));
+            continue;
+          }
+
+          const jsonText = jsonMatch[0];
+
+          // safe parse
+          let parsed: any;
+          try {
+            parsed = JSON.parse(jsonText);
+          } catch (err) {
+            console.warn("⚠️ JSON.parse failed. Attempting minor fixes...");
+
+            // minor attempt: remove trailing commas
+            const cleaned = jsonText.replace(/,\s*}/g, "}").replace(/,\s*]}/g, "]}");
+            try {
+              parsed = JSON.parse(cleaned);
+            } catch (err2) {
+              console.error("❌ JSON parse ultimately failed for post. Raw JSON:", jsonText.slice(0, 400));
+              continue;
+            }
+          }
+
+          const now = new Date().toISOString();
+          parsed.createdAt = parsed.createdAt || now;
+          parsed.updatedAt = parsed.updatedAt || now;
+
+          processedResults.push(parsed);
         } catch (err) {
-          console.log("⚠️ JSON parse failed for chunk:", raw);
+          console.error("❌ Gemini processing error:", err);
           continue;
         }
-
-        // timestamps
-        const now = new Date().toISOString();
-        parsed.createdAt = parsed.createdAt || now;
-        parsed.updatedAt = parsed.updatedAt || now;
-
-        processedResults.push(parsed);
-      } catch (err) {
-        console.log("❌ Gemini processing error:", err);
-        continue;
       }
     }
 
-    return processedResults; // FINAL CLEAN ARRAY
+    return processedResults;
   } catch (err) {
-    console.log("Error in linkedin post filtration:", err);
+    console.error("Error in linkedin post filtration:", err);
     return [];
   }
 };
