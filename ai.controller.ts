@@ -127,7 +127,23 @@ export const getScrappedJobs = async (req: Request, res: Response, next: NextFun
 
             const result = await linkedinScrapper(linkedinConfig, maxJobs, inputQuery);
 
-            const chunkedData = chunkData(result as any, maxJobs);
+            const cleanPost = (text: string) => {
+                return text
+                  .replace(/^Feed post/gi, "")
+                  .replace(/Follow/gi, "")
+                  .replace(/hashtag/gi, "")
+                  .replace(/…more/gi, "")
+                  .replace(/\d+\scomments?/gi, "")
+                  .replace(/\d+\sreposts?/gi, "")
+                  .replace(/\d+\slikes?/gi, "")
+                  .replace(/^\s+|\s+$/g, "")
+                  .replace(/\n{2,}/g, "\n")
+                  .trim();
+              };
+              
+            const cleanedDetails = result.map(res=> cleanPost(res));
+
+            const chunkedData = chunkData(cleanedDetails as any, maxJobs);
 
             console.log("chunked data: ", chunkedData);
             console.log("chunked data: ", chunkedData.length);
