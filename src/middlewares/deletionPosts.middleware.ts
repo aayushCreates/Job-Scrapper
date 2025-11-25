@@ -1,0 +1,36 @@
+const prisma = new PrismaClient();
+
+export const deleteLinkedinPosts = async () => {
+  try {
+    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+
+    const deletePrevAllLinkedinPosts = await prisma.LinkedinJobPosts.deleteMany(
+      {
+        where: {
+          createdAt: { lt: fiveDaysAgo },
+        },
+      }
+    );
+
+    return deletePrevAllLinkedinPosts;
+  } catch (err) {
+    console.log("Error in linkedin post deletion method");
+    return;
+  }
+};
+
+export const deleteExpJobs = async () => {
+  try {
+    const currTime = new Date().getTime();
+    const deletedJobs = await prisma.ScrappedJobs.deleteMany({
+      where: {
+        expiredAt: { lt: currTime },
+      },
+    });
+
+    return deletedJobs;
+  } catch (err) {
+    console.log("Error in deletion of expired jobs method");
+    return;
+  }
+};

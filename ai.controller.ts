@@ -1,6 +1,7 @@
 import { internshalaConfig } from "@/config/internshala.config";
 import { linkedinConfig } from "@/config/linkedin.config";
 import { naukriConfig } from "@/config/naukri.config";
+import { deleteExpJobs, deleteLinkedinPosts } from "@/middlewares/deletionPosts.middleware";
 import unstopSrappedJobs from "@/middlewares/unstop.middleware";
 import { linkedinScrapper } from "@/scripts/linkedinScrapper";
 import { scrapper } from "@/scripts/scrapper";
@@ -193,12 +194,7 @@ export const deleteExpiredJobs = async (
   next: NextFunction
 ) => {
   try {
-    const currTime = new Date().getTime();
-    const deletedJobs = await prisma.ScrappedJobs.deleteMany({
-      where: {
-        expiredAt: { lt: currTime },
-      },
-    });
+    const deletedJobs: any = deleteExpJobs();
 
     res.status(200).json({
       message: "Expired jobs are deleted successfully",
@@ -218,15 +214,7 @@ export const autoDeleteLinkedPosts = async (
   next: NextFunction
 ) => {
   try {
-    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-
-    const deletePrevAllLinkedinPosts = await prisma.LinkedinJobPosts.deleteMany(
-      {
-        where: {
-          createdAt: { lt: fiveDaysAgo },
-        },
-      }
-    );
+    const deletePrevAllLinkedinPosts: any = deleteLinkedinPosts();
 
     res.status(200).json({
       message: "All 5 days ago posted posts are deleted successfully",
