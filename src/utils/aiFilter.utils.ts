@@ -23,6 +23,7 @@ Your job is to take an array of **chunked raw data of html, scraped job html** a
   salary: string,
   jobUrl: string,
   companyName: string,
+  expiredAt: string (ISO 8601),
   postedAt: string (ISO 8601 format),
   createdAt: string (ISO 8601),
   updatedAt: string (ISO 8601)

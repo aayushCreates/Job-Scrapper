@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -9,22 +8,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model ScrappedJobs {
-  id  String  @id @default(uuid())
-  title String  
-  companyName String
-  description String
-  requiredSkills  String[]
-  allowedBatches  String[]
-  allowedBranches String[]
-  salary  String
-  jobUrl  String
-  location  String
-  requiredExperience  String
-  postPlatform  String
-  postedAt  DateTime
+  id                 String   @id @default(uuid())
+  title              String
+  companyName        String
+  description        String
+  requiredSkills     String[]
+  allowedBatches     String[]
+  allowedBranches    String[]
+  salary             String
+  jobUrl             String
+  location           String
+  requiredExperience String
+  postPlatform       String
+  postedAt           DateTime
+  expiredAt          DateTime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
+}
+
+model LinkedinJobPosts {
+  id             String   @id @default(uuid())
+  postedPerson   String
+  description    String
+  batch          String
+  location       String
+  emailMentioned String
+  phoneMentioned String
+  linkMentioned  String
+  postedAt       DateTime
+  expiredAt      DateTime
+  createdAt      DateTime
+  updatedAt      DateTime
 }
