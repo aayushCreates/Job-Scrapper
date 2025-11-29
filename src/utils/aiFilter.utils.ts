@@ -22,7 +22,10 @@ Your job is to take an array of **chunked raw data of html, scraped job html** a
   allowedBranches: string[],
   salary: string,
   jobUrl: string,
+  location: string,
   companyName: string,
+  requiredExperience: string,
+  postPlatform: string,
   expiredAt: string (ISO 8601),
   postedAt: string (ISO 8601 format),
   createdAt: string (ISO 8601),
@@ -31,10 +34,10 @@ Your job is to take an array of **chunked raw data of html, scraped job html** a
 
 ### Rules:
 - Normalize \`requiredSkills\` to an array (e.g. split on commas).
-- Keep \`salary\` as a string (e.g. "₹5–8 LPA", "Not disclosed").
+- Keep \`salary\` as a string (e.g. "₹5-8 LPA", "Not disclosed").
 - Ensure all date fields are ISO strings (e.g. "2025-10-20T00:00:00Z").
 - Return only the JSON array. No markdown, no explanation.
-
+- also if any field not having value then make it "" or according to its type.
 Here is the data:
 
 ${JSON.stringify(cd)}

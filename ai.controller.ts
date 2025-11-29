@@ -1,6 +1,7 @@
 import { internshalaConfig } from "@/config/internshala.config";
 import { linkedinConfig } from "@/config/linkedin.config";
 import { naukriConfig } from "@/config/naukri.config";
+import { PrismaClient } from "@/generated/prisma";
 import { deleteExpJobs, deleteLinkedinPosts } from "@/middlewares/deletionPosts.middleware";
 import unstopSrappedJobs from "@/middlewares/unstop.middleware";
 import { linkedinScrapper } from "@/scripts/linkedinScrapper";
@@ -53,10 +54,17 @@ export const getScrappedJobs = async (
           message: "Jobs are not found after scrapping",
         });
       }
+
+      console.log("internshala formatted jobs: ", aiFormattedData);
+
+      const newJob = await prisma.scrappedJobs.createMany({
+        data: aiFormattedData
+      })
+
       res.status(200).json({
         success: true,
         message: "Jobs are scrapped successfully",
-        data: aiFormattedData,
+        data: newJob,
       });
     } else if (platform === "cuvette") {
       let page = 1;
@@ -70,6 +78,10 @@ export const getScrappedJobs = async (
         totalJobs.push(jobs.data.data);
         page++;
       }
+      
+      const newJob = await prisma.scrappedJobs.createMany({
+        data: totalJobs
+      });
 
       res.status(200).json({
         success: true,
@@ -103,14 +115,16 @@ export const getScrappedJobs = async (
         });
       }
 
+      const newJobs = await prisma.scrappedJobs.createMany({
+        data: aiFormattedData
+      });
+
       res.status(200).json({
         success: true,
         message: "Jobs are scrapped successfully",
-        data: aiFormattedData,
+        data: newJobs,
       });
     } else if (platform === "unstop") {
-      console.log("req.body", req.body);
-
       let { jobType, exprience, jobPostedDays, maxJobs } = req.body;
 
       if (!jobType) jobType = "Full Time";
@@ -118,7 +132,7 @@ export const getScrappedJobs = async (
       if (!jobPostedDays) jobPostedDays = 1;
       if (!maxJobs) maxJobs = 30;
 
-      const jobs = unstopSrappedJobs(
+      const jobs = await unstopSrappedJobs(
         maxJobs,
         exprience,
         role,
@@ -133,12 +147,14 @@ export const getScrappedJobs = async (
         });
       }
 
-      //  send to the DB
+      const newJobs = await prisma.scrappedJobs.createMany({
+        data: jobs as any,
+      });
 
       return res.status(200).json({
         success: true,
         message: "Jobs fetched from Unstop successfully",
-        total: Array.isArray(jobs) && jobs.length,
+        total: newJobs.count,
         data: jobs,
       });
     } else if (platform === "linkedin") {
@@ -168,13 +184,14 @@ export const getScrappedJobs = async (
 
       const chunkedData = chunkData(cleanedDetails as any, maxJobs as number);
 
-      console.log("chunked data length: ", chunkData.length);
-
       const formattedJobs = (await linkedinPostFilter(chunkedData)) as any;
-      console.log("formatted result from the linkedin api", formattedJobs);
+
+      const newJobs = await prisma.linkedinJobPosts.create({
+        data: formattedJobs
+      }) 
 
       return res.status(200).json({
-        data: formattedJobs,
+        data: newJobs,
         message: "jobs posts are fetched successfully from linkedin",
       });
     }
