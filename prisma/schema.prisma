@@ -16,10 +16,10 @@ model ScrappedJobs {
   requiredSkills     String[]
   allowedBatches     String[]
   allowedBranches    String[]
-  salary             String?
+  salary             String
   jobUrl             String
-  location           String?
-  requiredExperience String?
+  location           String
+  requiredExperience String
   postPlatform       String
   postedAt           DateTime
   expiredAt          DateTime
@@ -32,11 +32,11 @@ model LinkedinJobPosts {
   id             String   @id @default(uuid())
   postedPerson   String
   description    String
-  batch          String?
-  location       String?
-  emailMentioned String?
-  phoneMentioned String?
-  linkMentioned  String?
+  batch          String
+  location       String
+  emailMentioned String
+  phoneMentioned String
+  linkMentioned  String
   postedAt       DateTime
   expiredAt      DateTime
   createdAt      DateTime
