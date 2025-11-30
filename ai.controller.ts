@@ -69,25 +69,25 @@ export const getScrappedJobs = async (
       });
     } else if (platform === "cuvette") {
       let page = 1;
-      const totalJobs: any = [];
 
-      while (Math.ceil(maxJobs / 10) > page) {
-        const jobs = await axios.get(
-          `https://api.cuvette.tech/api/v1/externaljobs?search=${role}&page=${page}`
+      const roleParamFormat = role.replace(" ", "%20");
+
+      while (Math.ceil(maxJobs / 10) >= page) {
+        const jobs: any[] = await axios.get(
+          `https://api.cuvette.tech/api/v1/externaljobs?search=${roleParamFormat}&page=${page}`
         );
+  
+      await prisma.scrappedJobs.createMany({
+        data: jobs,
+        skipDuplicates: true
+      });
 
-        totalJobs.push(jobs.data.data);
         page++;
       }
-      
-      const newJob = await prisma.scrappedJobs.createMany({
-        data: totalJobs
-      });
 
       res.status(200).json({
         success: true,
         message: "Jobs are scrapped successfully",
-        data: totalJobs,
       });
     } else if (platform === "naukri") {
       const scrappedHtmlArr = await scrapper(
