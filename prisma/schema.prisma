@@ -9,7 +9,7 @@ datasource db {
 }
 
 model ScrappedJobs {
-  id                 String   @id @default(uuid())
+  id                 String    @id @default(uuid())
   title              String
   companyName        String
   description        String
@@ -21,15 +21,16 @@ model ScrappedJobs {
   location           String
   requiredExperience String
   postPlatform       String
-  postedAt           DateTime @default(now())
-  expiredAt          DateTime @default(now())
+  postedAt           DateTime? @default(now())
+  isDeadlineGiven    Boolean
+  expiredAt          DateTime? @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 }
 
 model LinkedinJobPosts {
-  id             String   @id @default(uuid())
+  id             String    @id @default(uuid())
   postedPerson   String
   description    String
   batch          String
@@ -37,8 +38,8 @@ model LinkedinJobPosts {
   emailMentioned String
   phoneMentioned String
   linkMentioned  String
-  postedAt       DateTime
-  expiredAt      DateTime
+  postedAt       DateTime?
+  expiredAt      DateTime?
   createdAt      DateTime
   updatedAt      DateTime
 }

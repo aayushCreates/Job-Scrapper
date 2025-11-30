@@ -25,10 +25,11 @@ Your job is to take an array of **chunked raw data of html, scraped job html** a
   location: string,
   requiredExperience: string,
   postPlatform: string,
-  expiredAt: DateTime,
-  postedAt:  DateTime,
-  createdAt: DateTime,
-  updatedAt: DateTime
+  isDeadlineGiven: boolean,
+  expiredAt: string (ISO 8601),
+  postedAt: string (ISO 8601 format),
+  createdAt: string (ISO 8601),
+  updatedAt: string (ISO 8601)
 }
 
 ### Rules:
@@ -37,6 +38,8 @@ Your job is to take an array of **chunked raw data of html, scraped job html** a
 - Ensure all date fields are ISO strings (e.g. "2025-10-20T00:00:00Z").
 - Return only the JSON array. No markdown, no explanation.
 - also if any field not having value then make it "" or according to its type.
+- if expiredAt is not given in the the data then mark isDeadlineGiven as true and if present then marks isDeadlineGiven as false.
+- if expiredAt is not given then add current dateTime and make isDeadlineGiven false.
 Here is the data:
 
 ${JSON.stringify(cd)}
