@@ -21,8 +21,8 @@ model ScrappedJobs {
   location           String
   requiredExperience String
   postPlatform       String
-  postedAt           DateTime
-  expiredAt          DateTime
+  postedAt           DateTime @default(now())
+  expiredAt          DateTime @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())

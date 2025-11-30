@@ -15,21 +15,20 @@ Your job is to take an array of **chunked raw data of html, scraped job html** a
 
 {
   title: string,
-  position: string,
   description: string,
+  companyName: string,
   requiredSkills: string[],
-  allowedYears: string,
+  allowedBatches: string[],
   allowedBranches: string[],
   salary: string,
   jobUrl: string,
   location: string,
-  companyName: string,
   requiredExperience: string,
   postPlatform: string,
-  expiredAt: string (ISO 8601),
-  postedAt: string (ISO 8601 format),
-  createdAt: string (ISO 8601),
-  updatedAt: string (ISO 8601)
+  expiredAt: DateTime,
+  postedAt:  DateTime,
+  createdAt: DateTime,
+  updatedAt: DateTime
 }
 
 ### Rules:

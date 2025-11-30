@@ -58,7 +58,8 @@ export const getScrappedJobs = async (
       console.log("internshala formatted jobs: ", aiFormattedData);
 
       const newJob = await prisma.scrappedJobs.createMany({
-        data: aiFormattedData
+        data: aiFormattedData,
+        skipDuplicates: true
       })
 
       res.status(200).json({
