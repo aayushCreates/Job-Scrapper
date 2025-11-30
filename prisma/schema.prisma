@@ -17,7 +17,7 @@ model ScrappedJobs {
   allowedBatches     String[]
   allowedBranches    String[]
   salary             String
-  jobUrl             String
+  jobUrl             String   @unique
   location           String
   requiredExperience String
   postPlatform       String

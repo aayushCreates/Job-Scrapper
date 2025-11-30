@@ -123,7 +123,7 @@ export const getScrappedJobs = async (
       res.status(200).json({
         success: true,
         message: "Jobs are scrapped successfully",
-        data: newJobs,
+        data: newJobs.count,
       });
     } else if (platform === "unstop") {
       let { jobType, exprience, jobPostedDays, maxJobs } = req.body;
