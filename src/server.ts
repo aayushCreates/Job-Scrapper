@@ -24,7 +24,6 @@ app.use('/upload', uploadRouter);
 app.use('/job/scrapped/data', scrappedJobs);
 app.use('/job-board/scrape/jobs', aiScrapperRoutes);
 
-// const port = process.env.PORT || 5000;
 const port = 8080;
 app.listen(port, () => {
   console.log(`Server is running on PORT: ${port} ✅`);

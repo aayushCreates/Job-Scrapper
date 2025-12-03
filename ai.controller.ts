@@ -2,7 +2,10 @@ import { internshalaConfig } from "@/config/internshala.config";
 import { linkedinConfig } from "@/config/linkedin.config";
 import { naukriConfig } from "@/config/naukri.config";
 import { PrismaClient } from "@/generated/prisma";
-import { deleteExpJobs, deleteLinkedinPosts } from "@/middlewares/deletionPosts.middleware";
+import {
+  deleteExpJobs,
+  deleteLinkedinPosts,
+} from "@/middlewares/deletionPosts.middleware";
 import unstopSrappedJobs from "@/middlewares/unstop.middleware";
 import { linkedinScrapper } from "@/scripts/linkedinScrapper";
 import { scrapper } from "@/scripts/scrapper";
@@ -59,8 +62,8 @@ export const getScrappedJobs = async (
 
       const newJob = await prisma.scrappedJobs.createMany({
         data: aiFormattedData,
-        skipDuplicates: true
-      })
+        skipDuplicates: true,
+      });
 
       res.status(200).json({
         success: true,
@@ -76,11 +79,11 @@ export const getScrappedJobs = async (
         const jobs: any[] = await axios.get(
           `https://api.cuvette.tech/api/v1/externaljobs?search=${roleParamFormat}&page=${page}`
         );
-  
-      await prisma.scrappedJobs.createMany({
-        data: jobs,
-        skipDuplicates: true
-      });
+
+        await prisma.scrappedJobs.createMany({
+          data: jobs,
+          skipDuplicates: true,
+        });
 
         page++;
       }
@@ -117,7 +120,7 @@ export const getScrappedJobs = async (
       }
 
       const newJobs = await prisma.scrappedJobs.createMany({
-        data: aiFormattedData
+        data: aiFormattedData,
       });
 
       res.status(200).json({
@@ -133,7 +136,7 @@ export const getScrappedJobs = async (
       if (!jobPostedDays) jobPostedDays = 1;
       if (!maxJobs) maxJobs = 30;
 
-      const jobs = await unstopSrappedJobs(
+      const jobs: any[] = await unstopSrappedJobs(
         maxJobs,
         exprience,
         role,
@@ -149,14 +152,15 @@ export const getScrappedJobs = async (
       }
 
       const newJobs = await prisma.scrappedJobs.createMany({
-        data: jobs as any,
+        data: [...jobs],
+        skipDuplicates: true,
       });
 
       return res.status(200).json({
         success: true,
         message: "Jobs fetched from Unstop successfully",
         total: newJobs.count,
-        data: jobs,
+        data: newJobs.count,
       });
     } else if (platform === "linkedin") {
       const { inputQuery } = req.body;
@@ -182,18 +186,25 @@ export const getScrappedJobs = async (
       };
 
       const cleanedDetails = result.map((res) => cleanPost(res));
+      console.log("clean details of the job: ", cleanedDetails);
 
       const chunkedData = chunkData(cleanedDetails as any, maxJobs as number);
 
-      const formattedJobs = (await linkedinPostFilter(chunkedData)) as any;
+      console.log("chunkedData: ", chunkedData);
 
-      const newJobs = await prisma.linkedinJobPosts.create({
-        data: formattedJobs
-      }) 
+      const formattedPosts = (await linkedinPostFilter(chunkedData)) as any;
+      console.log("formated posts: ", formattedPosts);
+
+      const posts = await prisma.linkedinJobPosts.createMany({
+        data: formattedPosts,
+        skipDuplicates: true
+      });
+
+      console.log("posts: ", posts);
 
       return res.status(200).json({
-        data: newJobs,
         message: "jobs posts are fetched successfully from linkedin",
+        totalPosts: posts.count
       });
     }
   } catch (err) {

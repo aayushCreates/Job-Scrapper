@@ -39,7 +39,7 @@ model LinkedinJobPosts {
   phoneMentioned String
   linkMentioned  String
   postedAt       DateTime?
-  expiredAt      DateTime?
+  // expiredAt      DateTime?
   createdAt      DateTime
   updatedAt      DateTime
 }

@@ -1,9 +1,9 @@
 
 
-
+// domain -> 1=Management, 2=Engineering
 
 export const indeedConfig = {
-    baseUrl: "https://www.naukri.com",
+    baseUrl: "https://unstop.com/jobs?oppstatus=recent&datePosted=1&usertype=fresher&domain=2",
     searchUrl: (role: string, page = 1) => `https://www.naukri.com/${encodeURIComponent(role)}-jobs-${page}`,
     loadType: "pagination",
     selectors: {

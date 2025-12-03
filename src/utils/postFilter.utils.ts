@@ -7,41 +7,50 @@ export const linkedinPostFilter = async (chunkedData: any[]) => {
     const processedResults: any[] = [];
 
     const promptBase = `
-You are a strict data extraction assistant.
+    You are a strict data extraction assistant.
+    
+    You will receive raw text from a scraped LinkedIn post.
+    
+    Extract ONLY useful information needed by a college TPO.
+    
+    Return a SINGLE JSON object in this exact schema:
+    
+    {
+      "postedPerson": String,
+      "description": String,
+      "batch": String,
+      "location": String,
+      "emailMentioned": String,
+      "phoneMentioned": String,
+      "linkMentioned": String,
+      "postedAt": String,
+      "createdAt": String,
+      "updatedAt": String
+    }
+    
+    Rules:
+    - "postedAt" must be converted into an ACTUAL ISO datetime string.
+      Examples:
+        "1h", "1 hour ago", "12h", "12 hours ago" → NOW minus that many hours.
+        "30m", "30 minutes ago" → NOW minus minutes.
+        "2d", "2 days ago" → NOW minus days.
+        "1w", "1 week ago" → NOW minus 7 days.
+        "1mo", "1 month ago" → NOW minus 30 days.
+        "2mo", "2 months ago" → NOW minus 60 days.
+        "1y", "1 year ago" → NOW minus 365 days.
+    - Assume "NOW" is the current datetime at the moment of processing.
+    - Use ISO 8601 format: YYYY-MM-DDTHH:mm:ssZ.
+    
+    - Clean the description completely (remove repeated headers, hashtags, “Feed post”, “Follow”, “…more”, likes/comments, and timestamps).
+    - Extract email, phone numbers, URLs, batch, companyName and things which is needed according to my defined format.
+    - If any value is missing, return "" (empty string) or null according to type.
+    - “createdAt” and “updatedAt” must both be the current datetime in ISO format.
+    - Return only the JSON object. No markdown. No explanation.
+    `;
+    
 
-You will receive raw text from a scraped LinkedIn post.
-
-Extract ONLY useful information needed by a college TPO.
-
-Return a SINGLE JSON object in this schema:
-
-{
-  "nameOfPosted": string | null,
-  "description": string | null,
-  "batch": string | null,
-  "location": string | null,
-  "email": string | null,
-  "phone": string | null,
-  "whatsapp": string | null,
-  "jobUrl": string | null,
-  "googleFormUrl": string | null,
-  "postedAt": string | null,
-  "createdAt": string,
-  "updatedAt": string
-}
-
-Rules:
-- Clean description completely (remove repeated headers, hashtags, "Feed post", "Follow", "…more", likes/comments, timestamps).
-- Extract email, phone, WhatsApp, URLs.
-- No guessing. Null if not found.
-- Always return VALID JSON only.
-- No markdown or code fences in the output.
-`;
-
-    // iterate chunkedData: supports array-of-arrays like [[post1, post2], [post3]]
     for (const cdArr of chunkedData) {
       for (const cd of cdArr) {
-        // resolve post text whether cd is string or { text: '...' }
         const postText = typeof cd === "string" ? cd : cd?.text || String(cd);
 
         const prompt = `${promptBase}
@@ -63,7 +72,7 @@ Rules:
             console.warn("⚠️ empty result from model");
             continue;
           }
-          
+
           //  to remove the output format issue if happens
           if (typeof (result as any).text === "function") {
             raw = ((result as any).text() || "").trim();

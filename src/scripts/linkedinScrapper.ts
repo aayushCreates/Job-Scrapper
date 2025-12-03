@@ -8,6 +8,35 @@ puppeteer.use(StealthPlugin());
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
+
+const parseRelativeTime = (text: string): Date | null => {
+  if (!text) return null;
+  const now = Date.now();
+  const t = text.toLowerCase();
+
+  if (/just now|a moment ago/.test(t)) return new Date(now);
+
+  // minutes
+  let m = t.match(/(\d+)\s*min(?:ute)?s?\b/);
+  if (!m) m = t.match(/(\d+)\s*m\b/);
+  if (m) return new Date(now - parseInt(m[1], 10) * 60 * 1000);
+
+  // hours
+  let h = t.match(/(\d+)\s*hour?s?\b/);
+  if (!h) h = t.match(/(\d+)\s*h\b/);
+  if (h) return new Date(now - parseInt(h[1], 10) * 60 * 60 * 1000);
+
+  // days
+  let d = t.match(/(\d+)\s*day?s?\b/);
+  if (!d) d = t.match(/(\d+)\s*d\b/);
+  if (d) return new Date(now - parseInt(d[1], 10) * 24 * 60 * 60 * 1000);
+
+  const parsed = Date.parse(text);
+  if (!Number.isNaN(parsed)) return new Date(parsed);
+
+  return null;
+};
+
 export const linkedinScrapper = async (
   linkedinConfig: any,
   maxPosts: number,
@@ -22,46 +51,155 @@ export const linkedinScrapper = async (
     const page = await browser.newPage();
 
     const cookiesPath = path.join(__dirname, "../../linkedin.cookies.json");
-    const cookies = JSON.parse(
-      fs.readFileSync(cookiesPath, "utf-8")
-    );
+    const cookies = JSON.parse(fs.readFileSync(cookiesPath, "utf-8"));
     await page.setCookie(...cookies);
 
-    // const input = "";
-    // inputQuery.staticKeywords.map((w: string)=> {
-    //     input.concat(`#${w.toLowerCase()}`);
-    // })
-      
-      const contentURL = `https://www.linkedin.com/search/results/content/?keywords=campus%20hiring%20OR%20on%20campus%20OR%20pool%20campus%20OR%20TPO%20OR%20placement%20cell%20OR%20campus%20drive`;
+    const contentURL = `https://www.linkedin.com/search/results/content/?keywords=campus%20hiring%20OR%20on%20campus%20OR%20pool%20campus%20OR%20TPO%20OR%20placement%20cell%20OR%20campus%20drive`;
 
     await page.goto(contentURL, {
       waitUntil: "networkidle2",
     });
 
-    await wait(3000);
+    await wait(2500);
 
-    // if (linkedinConfig.selectors.searchInput && inputQuery.length !== 0) {
-    //   await page.click(linkedinConfig.selectors.searchInput);
-    //   await page.keyboard.type(inputQuery, { delay: 100 });
-    //   await page.keyboard.press("Enter");
-    // }
+    // 24 hour cutoff
+    const cutoffMs = 24 * 60 * 60 * 1000;
+    const now = Date.now();
 
-    if (linkedinConfig.loadType === "scroll") {
-      await autoScrollUntil(page, linkedinConfig.selectors.postContainer, maxPosts);
+    // control params
+    const maxScrollAttempts = 20;
+    const scrollPause = 1400;
+    let scrollAttempts = 0;
+    let oldestLoadedPostTime: Date | null = null;
+
+    const readLoadedPosts = async () => {
+      return await page.$$eval(
+        linkedinConfig.selectors.postContainer,
+        (nodes: Element[]) =>
+          nodes.map((el) => {
+            const text = (el as HTMLElement).innerText || "";
+
+            let timeAttr: string | null = null;
+            const timeEl = el.querySelector("time");
+            if (timeEl && timeEl.getAttribute("datetime")) {
+              timeAttr = timeEl.getAttribute("datetime");
+            } else {
+              const meta = el.querySelector("[data-test-timestamp], .feed-shared-actor__sub-description, .feed-shared-actor__meta, span.visually-hidden" as any);
+              if (meta) timeAttr = (meta.textContent || "").trim();
+            }
+
+            return {
+              text,
+              timeRaw: timeAttr,
+            };
+          })
+      );
+    };
+
+    let collected: { text: string; timestamp: Date | null }[] = [];
+    while (scrollAttempts < maxScrollAttempts) {
+      const loaded = await readLoadedPosts();
+
+      collected = loaded.map((p) => {
+        let ts: Date | null = null;
+        if (p.timeRaw) {
+          const maybeISO = Date.parse(p.timeRaw);
+          if (!Number.isNaN(maybeISO)) ts = new Date(maybeISO);
+          else {
+            ts = (function () {
+              const t = (p.timeRaw || "").trim();
+              return null;
+            })();
+          }
+        }
+        return { text: p.text, timeRaw: p.timeRaw || null, timestamp: null as Date | null };
+      });
+
+      const loadedNode = await page.$$eval(
+        linkedinConfig.selectors.postContainer,
+        (nodes: Element[]) =>
+          nodes.map((el) => {
+            const text = (el as HTMLElement).innerText || "";
+            const timeEl = el.querySelector("time");
+            const timeRaw = timeEl?.getAttribute("datetime") || (el.querySelector(".feed-shared-actor__sub-description, .feed-shared-actor__meta, span.visually-hidden" as any)?.textContent || "");
+            return { text, timeRaw: (timeRaw || "").trim() };
+          })
+      );
+
+      const parsed = loadedNode.map((p) => {
+        let ts: Date | null = null;
+        if (p.timeRaw) {
+          const iso = Date.parse(p.timeRaw);
+          if (!Number.isNaN(iso)) ts = new Date(iso);
+          else {
+            ts = parseRelativeTime(p.timeRaw);
+            if (!ts) {
+              const candidate = p.text.match(/\b(\d+)\s*(?:h|hr|hour|hours|m|min|minute|day|d)\b/i);
+              if (candidate) {
+                ts = parseRelativeTime(candidate[0]);
+              }
+            }
+          }
+        } else {
+          const candidate = p.text.match(/\b(\d+)\s*(?:hours?|hrs?|h|minutes?|mins?|m|days?|d)\b/i);
+          if (candidate) ts = parseRelativeTime(candidate[0]);
+        }
+        return { text: p.text, timestamp: ts };
+      });
+
+      const timestamps = parsed.map((x) => x.timestamp).filter(Boolean) as Date[];
+      if (timestamps.length) {
+        const minTs = new Date(Math.min(...timestamps.map((d) => d.getTime())));
+        oldestLoadedPostTime = minTs;
+      } else {
+        oldestLoadedPostTime = null;
+      }
+
+      if (oldestLoadedPostTime && now - oldestLoadedPostTime.getTime() > cutoffMs + 5 * 60 * 1000) {
+        break;
+      }
+
+      if (parsed.length >= maxPosts) break;
+
+      await page.evaluate(() => window.scrollBy({ top: window.innerHeight, left: 0, behavior: "smooth" }));
+      await wait(scrollPause + Math.floor(Math.random() * 800));
+      scrollAttempts++;
     }
 
-    const posts = await page.$$eval(
+    const finalLoaded = await page.$$eval(
       linkedinConfig.selectors.postContainer,
-      (elements, limit: number) => {
-        return Array.from(elements)
-          .slice(0, limit)
-          .map((el: any) => el.innerText.trim());  
-      },
-      maxPosts
+      (nodes: Element[]) =>
+        nodes.map((el) => {
+          const text = (el as HTMLElement).innerText || "";
+          const timeEl = el.querySelector("time");
+          const timeRaw = timeEl?.getAttribute("datetime") || (el.querySelector(".feed-shared-actor__sub-description, .feed-shared-actor__meta, span.visually-hidden" as any)?.textContent || "");
+          return { text, timeRaw: (timeRaw || "").trim() };
+        })
     );
 
+    const finalParsed = finalLoaded.map((p) => {
+      let ts: Date | null = null;
+      if (p.timeRaw) {
+        const iso = Date.parse(p.timeRaw);
+        if (!Number.isNaN(iso)) ts = new Date(iso);
+        else ts = parseRelativeTime(p.timeRaw) || null;
+      }
+      if (!ts) {
+        const candidate = p.text.match(/\b(\d+)\s*(?:hours?|hrs?|h|minutes?|mins?|m|days?|d)\b/i);
+        if (candidate) ts = parseRelativeTime(candidate[0]);
+      }
+      return { description: p.text.trim(), timestamp: ts };
+    });
+
+    const cutoff = new Date(Date.now() - cutoffMs);
+
+    const postsWithin24h = finalParsed.filter((p) => {
+      if (!p.timestamp) return false;
+      return p.timestamp.getTime() >= cutoff.getTime();
+    }).map((p) => p.description);
+
     await browser.close();
-    return posts;
+    return postsWithin24h.slice(0, maxPosts); 
   } catch (err) {
     console.log("Error in scrapper...", err);
     return [];
